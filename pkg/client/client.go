@@ -18,7 +18,7 @@ func init() {
 
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
-	// Only log the warning severity or above.
+	// Only log the info severity or above.
 	log.SetLevel(log.InfoLevel)
 }
 

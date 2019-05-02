@@ -1,15 +1,18 @@
 package plugin
 
 import (
-	"fmt"
 	"github.com/emirozer/kubectl-doctor/pkg/client"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+
+	log "github.com/sirupsen/logrus"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	"os"
 )
 
 const (
@@ -35,8 +38,13 @@ var (
 )
 
 func init() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	// Only log the info severity or above.
+	log.SetLevel(log.InfoLevel)
 	clientset = client.InitClient()
 }
+
 
 // DoctorOptions specify what the doctor is going to do
 type DoctorOptions struct {
@@ -90,16 +98,12 @@ func NewDoctorCmd() *cobra.Command {
 func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDash int) error {
 	o.Args = args
 	if len(args) == 0 {
-		fmt.Println("Going for a full scan as no flags are set")
+		log.Info("Going for a full scan as no flags are set")
 	}
 	o.KubeCli = clientset
 
 	var err error
 	configLoader := o.Flags.ToRawKubeConfigLoader()
-	o.Namespace, _, err = configLoader.Namespace()
-	if err != nil {
-		return err
-	}
 
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(o.Flags.ToRESTConfig())
 	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
@@ -123,7 +127,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 // Validate validate
 func (o *DoctorOptions) Validate() error {
 	if len(o.Namespace) == 0 {
-		return fmt.Errorf("namespace must be specified properly!")
+		return errors.New("namespace must be specified properly!")
 	}
 	return nil
 }
@@ -134,5 +138,6 @@ func (o *DoctorOptions) Run() error {
 	if err != nil {
 		return err
 	}
+	log.Info(nodes)
 	return nil
 }
