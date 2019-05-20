@@ -45,7 +45,6 @@ func init() {
 	clientset = client.InitClient()
 }
 
-
 // DoctorOptions specify what the doctor is going to do
 type DoctorOptions struct {
 	// target namespace to scan
@@ -70,6 +69,7 @@ func NewDoctorOptions() *DoctorOptions {
 
 // NewDoctorCmd returns a cobra command wrapping DoctorOptions
 func NewDoctorCmd() *cobra.Command {
+
 	opts := NewDoctorOptions()
 
 	cmd := &cobra.Command{
@@ -98,11 +98,12 @@ func NewDoctorCmd() *cobra.Command {
 func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDash int) error {
 	o.Args = args
 	if len(args) == 0 {
-		log.Info("Going for a full scan as no flags are set")
+		log.Info("Going for a full scan as no flags are set!")
 	}
 	o.KubeCli = clientset
 
 	var err error
+
 	configLoader := o.Flags.ToRawKubeConfigLoader()
 
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(o.Flags.ToRESTConfig())
