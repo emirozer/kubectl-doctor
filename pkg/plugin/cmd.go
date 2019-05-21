@@ -106,7 +106,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 
 	configLoader := o.Flags.ToRawKubeConfigLoader()
 
-	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(o.Flags.ToRESTConfig())
+	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(o.Flags)
 	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
 
 	o.RESTClient, err = f.RESTClient()
