@@ -47,11 +47,12 @@ func init() {
 
 // DoctorOptions specify what the doctor is going to do
 type DoctorOptions struct {
-	// target namespace to scan
-	Namespace string
+	Namespaces []string
+	FetchedNamespaces []string
 
 	// Doctor options
 	DeploymentOnly bool
+	FullScan       bool
 	Flags          *genericclioptions.ConfigFlags
 	CoreClient     coreclient.CoreV1Interface
 	RESTClient     *restclient.RESTClient
@@ -85,8 +86,6 @@ func NewDoctorCmd() *cobra.Command {
 			cmdutil.CheckErr(opts.Run())
 		},
 	}
-	cmd.Flags().StringVarP(&opts.Namespace, "namespace", "n", "",
-		"Target namespace to triage, defaults to the first namespace in cluster")
 	cmd.Flags().BoolVar(&opts.DeploymentOnly, "deployment-only", false,
 		"Only triage deployments in a given namespace")
 	opts.Flags.AddFlags(cmd.Flags())
@@ -96,9 +95,13 @@ func NewDoctorCmd() *cobra.Command {
 
 // Complete populate default values from KUBECONFIG file
 func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDash int) error {
+	// namespace given by user add it to target
+	o.Namespaces = append(o.Namespaces, *o.Flags.Namespace)
+
 	o.Args = args
 	if len(args) == 0 {
 		log.Info("Going for a full scan as no flags are set!")
+		o.FullScan = true
 	}
 	o.KubeCli = clientset
 
@@ -114,7 +117,11 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 		return err
 	}
 
-	o.Namespace = args[0]
+	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(v1.ListOptions{})
+	for _, i := range fetchedNamespaces.Items{
+		o.FetchedNamespaces = append(o.FetchedNamespaces, i.Name)
+	}
+	log.Info("Fetched namespaces: {}", fetchedNamespaces)
 
 	o.Config, err = configLoader.ClientConfig()
 	if err != nil {
@@ -127,7 +134,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 
 // Validate validate
 func (o *DoctorOptions) Validate() error {
-	if len(o.Namespace) == 0 {
+	if len(o.Namespaces) == 0 {
 		return errors.New("namespace must be specified properly!")
 	}
 	return nil
@@ -135,10 +142,15 @@ func (o *DoctorOptions) Validate() error {
 
 // Run run
 func (o *DoctorOptions) Run() error {
-	nodes, err := o.CoreClient.Nodes().Get(o.Namespace, v1.GetOptions{})
+
+	if o.FullScan == true {
+
+	}
+
+	endpoints, err := o.CoreClient.Endpoints("").List(v1.ListOptions{})
 	if err != nil {
 		return err
 	}
-	log.Info(nodes)
+	log.Info(endpoints)
 	return nil
 }

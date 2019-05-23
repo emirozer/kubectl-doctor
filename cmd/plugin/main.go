@@ -12,7 +12,7 @@ func main() {
 	flags := pflag.NewFlagSet("kubectl-doctor", pflag.ExitOnError)
 	pflag.CommandLine = flags
 
-	// bypass to DebugCmd
+	// bypass to DoctorCmd
 	cmd := plugin.NewDoctorCmd()
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
