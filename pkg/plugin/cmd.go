@@ -8,11 +8,12 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 
+	"os"
+
 	log "github.com/sirupsen/logrus"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"os"
 )
 
 const (
@@ -47,7 +48,6 @@ func init() {
 
 // DoctorOptions specify what the doctor is going to do
 type DoctorOptions struct {
-	Namespaces []string
 	FetchedNamespaces []string
 
 	// Doctor options
@@ -74,11 +74,11 @@ func NewDoctorCmd() *cobra.Command {
 	opts := NewDoctorOptions()
 
 	cmd := &cobra.Command{
-		Use:                   "doctor [-n NAMESPACE] -- COMMAND [args...]",
+		Use: "doctor [-n NAMESPACE] -- COMMAND [args...]",
 		DisableFlagsInUseLine: true,
-		Short:                 "start triage for current targeted kubernetes cluster",
-		Long:                  longDesc,
-		Example:               example,
+		Short:   "start triage for current targeted kubernetes cluster",
+		Long:    longDesc,
+		Example: example,
 		Run: func(c *cobra.Command, args []string) {
 			argsLenAtDash := c.ArgsLenAtDash()
 			cmdutil.CheckErr(opts.Complete(c, args, argsLenAtDash))
@@ -95,8 +95,6 @@ func NewDoctorCmd() *cobra.Command {
 
 // Complete populate default values from KUBECONFIG file
 func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDash int) error {
-	// namespace given by user add it to target
-	o.Namespaces = append(o.Namespaces, *o.Flags.Namespace)
 
 	o.Args = args
 	if len(args) == 0 {
@@ -116,25 +114,26 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	if err != nil {
 		return err
 	}
+	log.Info("Retrieving CoreV1 Client.")
+	o.CoreClient = clientset.CoreV1()
 
 	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(v1.ListOptions{})
-	for _, i := range fetchedNamespaces.Items{
-		o.FetchedNamespaces = append(o.FetchedNamespaces, i.Name)
+	for _, i := range fetchedNamespaces.Items {
+		o.FetchedNamespaces = append(o.FetchedNamespaces, i.GetName())
 	}
-	log.Info("Fetched namespaces: {}", fetchedNamespaces)
+	log.Info("Fetched namespaces: {}", o.FetchedNamespaces)
 
 	o.Config, err = configLoader.ClientConfig()
 	if err != nil {
 		return err
 	}
 
-	o.CoreClient = clientset.CoreV1()
 	return nil
 }
 
 // Validate validate
 func (o *DoctorOptions) Validate() error {
-	if len(o.Namespaces) == 0 {
+	if len(o.FetchedNamespaces) == 0 {
 		return errors.New("namespace must be specified properly!")
 	}
 	return nil
@@ -142,10 +141,6 @@ func (o *DoctorOptions) Validate() error {
 
 // Run run
 func (o *DoctorOptions) Run() error {
-
-	if o.FullScan == true {
-
-	}
 
 	endpoints, err := o.CoreClient.Endpoints("").List(v1.ListOptions{})
 	if err != nil {
