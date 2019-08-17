@@ -18,6 +18,9 @@ vendor:
 bin:
 	mkdir bin
 
+dep:
+	glide up -v
+
 release:
 	goreleaser --rm-dist
 
