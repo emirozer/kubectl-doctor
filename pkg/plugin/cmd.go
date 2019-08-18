@@ -74,8 +74,7 @@ func NewDoctorCmd() *cobra.Command {
 	opts := NewDoctorOptions()
 
 	cmd := &cobra.Command{
-		Use: "doctor [-n NAMESPACE] -- COMMAND [args...]",
-		DisableFlagsInUseLine: true,
+		Use:     "doctor [-n NAMESPACE] -- COMMAND [args...]",
 		Short:   "start triage for current targeted kubernetes cluster",
 		Long:    longDesc,
 		Example: example,
@@ -88,6 +87,7 @@ func NewDoctorCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&opts.DeploymentOnly, "deployment-only", false,
 		"Only triage deployments in a given namespace")
+
 	opts.Flags.AddFlags(cmd.Flags())
 
 	return cmd
@@ -114,13 +114,14 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	if err != nil {
 		return err
 	}
-	log.Info("Retrieving CoreV1 Client.")
+	log.Info("Retrieving CoreV1 Client for targeted cluster.")
 	o.CoreClient = clientset.CoreV1()
 
 	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(v1.ListOptions{})
 	for _, i := range fetchedNamespaces.Items {
 		o.FetchedNamespaces = append(o.FetchedNamespaces, i.GetName())
 	}
+
 	log.Info("Fetched namespaces: {}", o.FetchedNamespaces)
 
 	o.Config, err = configLoader.ClientConfig()
@@ -146,6 +147,7 @@ func (o *DoctorOptions) Run() error {
 	if err != nil {
 		return err
 	}
+
 	log.Info(endpoints)
 	return nil
 }

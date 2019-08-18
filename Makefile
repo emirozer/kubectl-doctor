@@ -28,7 +28,7 @@ snapshot:
 	goreleaser --snapshot --skip-publish --rm-dist
 
 build: bin
-	go build -o kubectl-doctor cmd/plugin/main.go 
+	go build -o kubectl-doctor cmd/kubectl-doctor.go
 	cp ./kubectl-doctor /usr/local/bin/plugins
 	cp ./kubectl-doctor ./bin
 
