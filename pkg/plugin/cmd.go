@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"github.com/cheggaaa/pb/v3"
 	"github.com/emirozer/kubectl-doctor/pkg/client"
 	"github.com/emirozer/kubectl-doctor/pkg/triage"
 	"github.com/pkg/errors"
@@ -10,7 +9,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -159,22 +157,12 @@ func (o *DoctorOptions) Run() error {
 
 	// triage endpoints starts
 	log.Info("Starting triage of cluster-wide Endpoints resources.")
-	endpoints, err := o.CoreClient.Endpoints("").List(v1.ListOptions{})
+
+	endpointsTriage, err := triage.TriageEndpoints(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	bar := pb.StartNew(len(endpoints.Items))
-	listOfTriages := make([]string, 0)
-	for _, i := range endpoints.Items {
-		bar.Increment()
-		time.Sleep(time.Millisecond * 2)
-		if len(i.Subsets) == 0 {
-			listOfTriages = append(listOfTriages, i.GetName())
-		}
-	}
-	endpointsTriage := triage.NewTriage("Endpoints", "Found orphaned endpoints!", listOfTriages)
-	bar.Finish()
-	if len(listOfTriages) == 0 {
+	if len(endpointsTriage.Anomalies) == 0 {
 		log.Info("Finished triage of Endpoints resources, all clear!")
 	} else {
 		log.WithFields(log.Fields{"resource": endpointsTriage.ResourceType, "Anomalies": endpointsTriage.Anomalies}).Warn(endpointsTriage.AnomalyType)
