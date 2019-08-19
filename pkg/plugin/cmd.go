@@ -144,6 +144,18 @@ func (o *DoctorOptions) Validate() error {
 
 // Run run
 func (o *DoctorOptions) Run() error {
+	// triage nodes stars
+	log.Info("Starting triage of nodes that form the cluster.")
+	nodesTriage, err := triage.TriageNodes(o.CoreClient)
+	if err != nil {
+		return err
+	}
+	if len(nodesTriage.Anomalies) == 0 {
+		log.Info("Nodes are looking good, no issues!")
+	} else {
+		log.WithFields(log.Fields{"resource": nodesTriage.ResourceType, "Anomalies": nodesTriage.Anomalies}).Warn(nodesTriage.AnomalyType)
+	}
+	// triage nodes ends
 
 	// triage endpoints starts
 	log.Info("Starting triage of cluster-wide Endpoints resources.")
@@ -155,7 +167,7 @@ func (o *DoctorOptions) Run() error {
 	listOfTriages := make([]string, 0)
 	for _, i := range endpoints.Items {
 		bar.Increment()
-		time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond * 2)
 		if len(i.Subsets) == 0 {
 			listOfTriages = append(listOfTriages, i.GetName())
 		}
@@ -167,7 +179,6 @@ func (o *DoctorOptions) Run() error {
 	} else {
 		log.WithFields(log.Fields{"resource": endpointsTriage.ResourceType, "Anomalies": endpointsTriage.Anomalies}).Warn(endpointsTriage.AnomalyType)
 	}
-
 	// triage endpoints ends
 
 	return nil
