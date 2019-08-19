@@ -30,7 +30,7 @@ snapshot:
 build: bin
 	go build -o kubectl-doctor cmd/kubectl-doctor.go
 	cp ./kubectl-doctor /usr/local/bin/plugins
-	cp ./kubectl-doctor ./bin
+	mv ./kubectl-doctor ./bin
 
 lint: $(GOPATH)/bin/golint$(suffix)
 	golint
