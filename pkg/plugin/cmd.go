@@ -184,5 +184,21 @@ func (o *DoctorOptions) Run() error {
 	}
 	// triage endpoints ends
 
+	// triage pvc starts
+	log.Info("Starting triage of cluster-wide pvc resources.")
+	pvcTriage, err := triage.TriagePVC(o.CoreClient)
+	if err != nil {
+		return err
+	}
+	if len(pvcTriage.Anomalies) == 0 {
+		log.Info("Finished triage of pvc resources, all clear!")
+	} else {
+		log.WithFields(log.Fields{"resource": pvcTriage.ResourceType, "Anomalies": pvcTriage.Anomalies}).Warn(pvcTriage.AnomalyType)
+	}
+	// triage pvc ends
+
+	// triage pv starts
+
+	// triage pv ends
 	return nil
 }
