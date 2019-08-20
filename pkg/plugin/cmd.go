@@ -121,9 +121,9 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	for _, i := range fetchedNamespaces.Items {
 		o.FetchedNamespaces = append(o.FetchedNamespaces, i.GetName())
 	}
-
-	log.Info("Fetched namespaces: {}", o.FetchedNamespaces)
-
+	log.Info("")
+	log.Info("Fetched namespaces: ", o.FetchedNamespaces)
+	log.Info("")
 	o.Config, err = configLoader.ClientConfig()
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage cluster crucial components starts
 	log.Info("Starting triage of cluster crucial component health checks.")
-
+	log.Info("")
 	componentsTriage, err := triage.TriageComponents(o.CoreClient)
 	if err != nil {
 		return err
@@ -159,6 +159,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage nodes stars
 	log.Info("Starting triage of nodes that form the cluster.")
+	log.Info("")
 	nodesTriage, err := triage.TriageNodes(o.CoreClient)
 	if err != nil {
 		return err
@@ -172,6 +173,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage endpoints starts
 	log.Info("Starting triage of cluster-wide Endpoints resources.")
+	log.Info("")
 
 	endpointsTriage, err := triage.TriageEndpoints(o.CoreClient)
 	if err != nil {
@@ -186,6 +188,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage pvc starts
 	log.Info("Starting triage of cluster-wide pvc resources.")
+	log.Info("")
 	pvcTriage, err := triage.TriagePVC(o.CoreClient)
 	if err != nil {
 		return err
@@ -198,7 +201,17 @@ func (o *DoctorOptions) Run() error {
 	// triage pvc ends
 
 	// triage pv starts
-
+	log.Info("Starting triage of cluster-wide pv resources.")
+	log.Info("")
+	pvTriage, err := triage.TriagePV(o.CoreClient)
+	if err != nil {
+		return err
+	}
+	if len(pvTriage.Anomalies) == 0 {
+		log.Info("Finished triage of pv resources, all clear!")
+	} else {
+		log.WithFields(log.Fields{"resource": pvTriage.ResourceType, "Anomalies": pvTriage.Anomalies}).Warn(pvTriage.AnomalyType)
+	}
 	// triage pv ends
 	return nil
 }
