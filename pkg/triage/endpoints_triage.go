@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// TriageEndpoints gets a coreclient for k8s and scans through all endpoints to see if they are leftover/unused
 func TriageEndpoints(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	endpoints, err := coreClient.Endpoints("").List(v1.ListOptions{})
 	if err != nil {
@@ -21,5 +22,6 @@ func TriageEndpoints(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 			listOfTriages = append(listOfTriages, i.GetName())
 		}
 	}
+	bar.Finish()
 	return NewTriage("Endpoints", "Found orphaned endpoints!", listOfTriages), nil
 }

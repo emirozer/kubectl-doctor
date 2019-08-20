@@ -9,6 +9,8 @@ import (
 
 const targetReason = "KubeletReady"
 
+// TriageNodes gets a coreclient for k8s and checks if there are any nodes in the cluster
+// that are not in Ready state(unoperational nodes)
 func TriageNodes(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
 	nodes, err := coreClient.Nodes().List(v1.ListOptions{})
