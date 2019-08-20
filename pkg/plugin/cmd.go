@@ -93,7 +93,7 @@ func NewDoctorCmd() *cobra.Command {
 	return cmd
 }
 
-// Complete populate default values from KUBECONFIG file
+// Complete populate default values from KUBECONFIG file, sets up the clients
 func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDash int) error {
 
 	o.Args = args
@@ -132,7 +132,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	return nil
 }
 
-// Validate validate
+// Validate validate before the run that the namespace list cannot be empty(somehow?)
 func (o *DoctorOptions) Validate() error {
 	if len(o.FetchedNamespaces) == 0 {
 		return errors.New("namespace must be specified properly!")
@@ -140,8 +140,23 @@ func (o *DoctorOptions) Validate() error {
 	return nil
 }
 
-// Run run
+// Run doctor run
 func (o *DoctorOptions) Run() error {
+
+	// triage cluster crucial components starts
+	log.Info("Starting triage of cluster crucial component health checks.")
+
+	componentsTriage, err := triage.TriageComponents(o.CoreClient)
+	if err != nil {
+		return err
+	}
+	if len(componentsTriage.Anomalies) == 0 {
+		log.Info("Finished triage of cluster components, all clear!")
+	} else {
+		log.WithFields(log.Fields{"resource": componentsTriage.ResourceType, "Anomalies": componentsTriage.Anomalies}).Error(componentsTriage.AnomalyType)
+	}
+	// triage cluster crucial components ends
+
 	// triage nodes stars
 	log.Info("Starting triage of nodes that form the cluster.")
 	nodesTriage, err := triage.TriageNodes(o.CoreClient)
