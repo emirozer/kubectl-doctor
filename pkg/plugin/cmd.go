@@ -4,16 +4,15 @@ import (
 	"github.com/emirozer/kubectl-doctor/pkg/client"
 	"github.com/emirozer/kubectl-doctor/pkg/triage"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"os"
-
-	log "github.com/sirupsen/logrus"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	"os"
 )
 
 const (
@@ -213,5 +212,24 @@ func (o *DoctorOptions) Run() error {
 		log.WithFields(log.Fields{"resource": pvTriage.ResourceType, "Anomalies": pvTriage.Anomalies}).Warn(pvTriage.AnomalyType)
 	}
 	// triage pv ends
+
+	// triage deployments starts
+	for _, ns := range o.FetchedNamespaces {
+		log.Info("Starting triage of deployment resources for namespace: ", ns)
+		log.Info("")
+		deploymentTriage, err := triage.TriageDeployments(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(deploymentTriage.Anomalies) == 0 {
+			log.Info("Finished triage of deployment resources, all clear!")
+		} else {
+			log.WithFields(log.Fields{"resource": deploymentTriage.ResourceType, "Anomalies": deploymentTriage.Anomalies}).Warn(deploymentTriage.AnomalyType)
+		}
+	}
+
+	// triage deployments ends
+
 	return nil
+
 }
