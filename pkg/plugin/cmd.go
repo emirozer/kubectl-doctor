@@ -217,18 +217,47 @@ func (o *DoctorOptions) Run() error {
 	log.Info("---")
 	log.Info("Starting triage of deployment resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
-
-		deploymentTriage, err := triage.TriageDeployments(o.KubeCli, ns)
+		odeploymentTriage, err := triage.OrphanedDeployments(o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
-		if len(deploymentTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": deploymentTriage.ResourceType, "Anomalies": deploymentTriage.Anomalies}).Warn(deploymentTriage.AnomalyType)
+		if len(odeploymentTriage.Anomalies) > 0 {
+			log.WithFields(log.Fields{"resource": odeploymentTriage.ResourceType, "Anomalies": odeploymentTriage.Anomalies}).Warn(odeploymentTriage.AnomalyType)
+		}
+
+		ldeploymentTriage, err := triage.LeftOverDeployments(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(ldeploymentTriage.Anomalies) > 0 {
+			log.WithFields(log.Fields{"resource": ldeploymentTriage.ResourceType, "Anomalies": ldeploymentTriage.Anomalies}).Warn(ldeploymentTriage.AnomalyType)
 		}
 
 	}
 
 	// triage deployments ends
+
+	// triage replicasets starts
+	log.Info("---")
+	log.Info("Starting triage of replicasets resources across cluster")
+	for _, ns := range o.FetchedNamespaces {
+		orsTriage, err := triage.OrphanedReplicaSet(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(orsTriage.Anomalies) > 0 {
+			log.WithFields(log.Fields{"resource": orsTriage.ResourceType, "Anomalies": orsTriage.Anomalies}).Warn(orsTriage.AnomalyType)
+		}
+		lrsTriage, err := triage.LeftOverReplicaSet(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(lrsTriage.Anomalies) > 0 {
+			log.WithFields(log.Fields{"resource": lrsTriage.ResourceType, "Anomalies": lrsTriage.Anomalies}).Warn(lrsTriage.AnomalyType)
+		}
+	}
+
+	// triage replicasets ends
 
 	return nil
 
