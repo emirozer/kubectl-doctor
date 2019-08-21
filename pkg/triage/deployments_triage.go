@@ -1,10 +1,8 @@
 package triage
 
 import (
-	"github.com/cheggaaa/pb/v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
 // TriageDeployments gets a kubernetes.Clientset and a specific namespace string
@@ -16,14 +14,10 @@ func TriageDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Triage
 	if err != nil {
 		return nil, err
 	}
-	bar := pb.StartNew(len(deployments.Items))
 	for _, i := range deployments.Items {
-		bar.Increment()
-		time.Sleep(time.Millisecond * 2)
 		if i.Status.Replicas > 0 && i.Status.AvailableReplicas == 0 {
 			listOfTriages = append(listOfTriages, i.GetName())
 		}
 	}
-	bar.Finish()
-	return NewTriage("Deployments", "Found leftover deployments!", listOfTriages), nil
+	return NewTriage("Deployments", "Found leftover deployments in namespace: "+namespace, listOfTriages), nil
 }

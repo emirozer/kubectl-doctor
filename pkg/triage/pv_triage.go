@@ -1,10 +1,8 @@
 package triage
 
 import (
-	"github.com/cheggaaa/pb/v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
-	"time"
 )
 
 const pvAvailable = "Available"
@@ -16,14 +14,10 @@ func TriagePV(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	if err != nil {
 		return nil, err
 	}
-	bar := pb.StartNew(len(pvs.Items))
 	for _, i := range pvs.Items {
-		bar.Increment()
-		time.Sleep(time.Millisecond * 2)
 		if i.Status.Phase == pvAvailable {
 			listOfTriages = append(listOfTriages, i.GetName())
 		}
 	}
-	bar.Finish()
 	return NewTriage("PV", "Found PV in Available & Unclaimed State!", listOfTriages), nil
 }

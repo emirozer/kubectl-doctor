@@ -113,7 +113,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	if err != nil {
 		return err
 	}
-	log.Info("Retrieving CoreV1 Client for targeted cluster.")
+	log.Info("Retrieving necessary clientset for targeted k8s cluster.")
 	o.CoreClient = clientset.CoreV1()
 
 	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(v1.ListOptions{})
@@ -143,8 +143,8 @@ func (o *DoctorOptions) Validate() error {
 func (o *DoctorOptions) Run() error {
 
 	// triage cluster crucial components starts
+	log.Info("---")
 	log.Info("Starting triage of cluster crucial component health checks.")
-	log.Info("")
 	componentsTriage, err := triage.TriageComponents(o.CoreClient)
 	if err != nil {
 		return err
@@ -157,8 +157,8 @@ func (o *DoctorOptions) Run() error {
 	// triage cluster crucial components ends
 
 	// triage nodes stars
+	log.Info("---")
 	log.Info("Starting triage of nodes that form the cluster.")
-	log.Info("")
 	nodesTriage, err := triage.TriageNodes(o.CoreClient)
 	if err != nil {
 		return err
@@ -171,8 +171,8 @@ func (o *DoctorOptions) Run() error {
 	// triage nodes ends
 
 	// triage endpoints starts
+	log.Info("---")
 	log.Info("Starting triage of cluster-wide Endpoints resources.")
-	log.Info("")
 
 	endpointsTriage, err := triage.TriageEndpoints(o.CoreClient)
 	if err != nil {
@@ -186,8 +186,8 @@ func (o *DoctorOptions) Run() error {
 	// triage endpoints ends
 
 	// triage pvc starts
+	log.Info("---")
 	log.Info("Starting triage of cluster-wide pvc resources.")
-	log.Info("")
 	pvcTriage, err := triage.TriagePVC(o.CoreClient)
 	if err != nil {
 		return err
@@ -200,8 +200,8 @@ func (o *DoctorOptions) Run() error {
 	// triage pvc ends
 
 	// triage pv starts
+	log.Info("---")
 	log.Info("Starting triage of cluster-wide pv resources.")
-	log.Info("")
 	pvTriage, err := triage.TriagePV(o.CoreClient)
 	if err != nil {
 		return err
@@ -214,18 +214,18 @@ func (o *DoctorOptions) Run() error {
 	// triage pv ends
 
 	// triage deployments starts
+	log.Info("---")
+	log.Info("Starting triage of deployment resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
-		log.Info("Starting triage of deployment resources for namespace: ", ns)
-		log.Info("")
+
 		deploymentTriage, err := triage.TriageDeployments(o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
-		if len(deploymentTriage.Anomalies) == 0 {
-			log.Info("Finished triage of deployment resources, all clear!")
-		} else {
+		if len(deploymentTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": deploymentTriage.ResourceType, "Anomalies": deploymentTriage.Anomalies}).Warn(deploymentTriage.AnomalyType)
 		}
+
 	}
 
 	// triage deployments ends
