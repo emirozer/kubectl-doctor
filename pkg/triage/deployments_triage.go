@@ -22,7 +22,7 @@ func OrphanedDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Tria
 	return NewTriage("Deployments", "Found orphan deployments in namespace: "+namespace, listOfTriages), nil
 }
 
-// LeftOverDeploymentsDeployments gets a kubernetes.Clientset and a specific namespace string
+// LeftOverDeployments gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are leftover deployments
 // the criteria is that both the desired number of replicas and the available # of replicas are 0
 func LeftOverDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
