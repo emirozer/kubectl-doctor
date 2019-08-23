@@ -17,10 +17,8 @@ import (
 
 const (
 	example = `
-	# triage everything in a given target namespace
-	kubectl doctor my_namespace
-    # triage only deployments in a given target namespace
-    kubectl doctor my_namespace --deployment-only
+	# triage everything in the cluster
+	kubectl doctor 
 `
 	longDesc = `
     kubectl-doctor plugin will scan the given namespace for any kind of anomalies and reports back to its user.
@@ -30,7 +28,7 @@ const (
         * kubernetes nodes cpu usage or memory usage too high. or too low to report scaledown possiblity 
 `
 
-	usageError = "expects 'doctor NAMESPACE' for doctor command"
+	usageError = "expects no flags .. 'doctor' for doctor command"
 )
 
 var (
@@ -73,7 +71,7 @@ func NewDoctorCmd() *cobra.Command {
 	opts := NewDoctorOptions()
 
 	cmd := &cobra.Command{
-		Use:     "doctor [-n NAMESPACE] -- COMMAND [args...]",
+		Use:     "doctor",
 		Short:   "start triage for current targeted kubernetes cluster",
 		Long:    longDesc,
 		Example: example,
