@@ -1,3 +1,13 @@
+## Install
+1. Download `kubectl-doctor` binary from [releases](https://github.com/emirozer/kubectl-doctor/releases)
+2. Add it to your `PATH`
+
+## Usage
+When the plugin binary is found from `PATH` you can just execute it through `kubectl` CLI
+```shell
+kubectl doctor
+```
+
 ## Current list of anomaly checks
 
 * core component health (etcd cluster members, scheduler, controller-manager)
