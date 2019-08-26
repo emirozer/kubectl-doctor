@@ -5,8 +5,9 @@ This plugin is obviously inspired from [brew](http://brew.sh/) doctor :) It will
 This plugin does *not* change any state or configuration, it merely just scans and gathers information than reports back anomalies.
 
 ## Install
-1. Download `kubectl-doctor` binary from [releases](https://github.com/emirozer/kubectl-doctor/releases)
-2. Add it to your `PATH`
+1. Download a binary from [releases](https://github.com/emirozer/kubectl-doctor/releases) that is compatible with your os/arch
+2. Rename it to `kubectl-doctor`
+3. Add it to your `PATH`
 
 ## Usage
 When the plugin binary is found from `PATH` you can just execute it through `kubectl` CLI
