@@ -21,7 +21,7 @@ const (
 	kubectl doctor 
 `
 	longDesc = `
-    kubectl-doctor plugin will scan the given namespace for any kind of anomalies and reports back to its user.
+    kubectl-doctor plugin will scan the given k8s cluster for any kind of anomalies and reports back to its user.
     example anomalies: 
         * deployments that are older than 30d with 0 available, 
         * deployments that do not have minimum availability,
@@ -256,6 +256,20 @@ func (o *DoctorOptions) Run() error {
 	}
 
 	// triage replicasets ends
+
+	// triage jobs starts
+	log.Info("---")
+	log.Info("Starting triage of cronjob resources across cluster")
+	for _, ns := range o.FetchedNamespaces {
+		jobsTriage, err := triage.LeftoverJobs(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(jobsTriage.Anomalies) > 0 {
+			log.WithFields(log.Fields{"resource": jobsTriage.ResourceType, "Anomalies": jobsTriage.Anomalies}).Warn(jobsTriage.AnomalyType)
+		}
+	}
+	// triage jobs end
 
 	return nil
 

@@ -24,4 +24,5 @@ kubectl doctor
 * orphan replicasets (desired number of replicas are bigger than 0 but the available replicas are 0)
 * leftover replicasets (desired number of replicas and the available # of replicas are 0)
 * orphan deployments (desired number of replicas are bigger than 0 but the available replicas are 0)
-* lefover deployments (desired number of replicas and the available # of replicas are 0)
+* leftover deployments (desired number of replicas and the available # of replicas are 0)
+* leftover cronjobs (last active date is more than a month)
