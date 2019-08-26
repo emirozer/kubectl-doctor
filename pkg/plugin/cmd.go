@@ -221,6 +221,8 @@ func (o *DoctorOptions) Run() error {
 		}
 		if len(odeploymentTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": odeploymentTriage.ResourceType, "Anomalies": odeploymentTriage.Anomalies}).Warn(odeploymentTriage.AnomalyType)
+		} else {
+			log.Info("No orphaned deployments detected!  namespace: ", ns)
 		}
 
 		ldeploymentTriage, err := triage.LeftOverDeployments(o.KubeCli, ns)
@@ -229,6 +231,8 @@ func (o *DoctorOptions) Run() error {
 		}
 		if len(ldeploymentTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": ldeploymentTriage.ResourceType, "Anomalies": ldeploymentTriage.Anomalies}).Warn(ldeploymentTriage.AnomalyType)
+		} else {
+			log.Info("No leftover deployments detected!  namespace: ", ns)
 		}
 
 	}
@@ -245,6 +249,8 @@ func (o *DoctorOptions) Run() error {
 		}
 		if len(orsTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": orsTriage.ResourceType, "Anomalies": orsTriage.Anomalies}).Warn(orsTriage.AnomalyType)
+		} else {
+			log.Info("No orphaned replica sets detected!  namespace: ", ns)
 		}
 		lrsTriage, err := triage.LeftOverReplicaSet(o.KubeCli, ns)
 		if err != nil {
@@ -252,6 +258,8 @@ func (o *DoctorOptions) Run() error {
 		}
 		if len(lrsTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": lrsTriage.ResourceType, "Anomalies": lrsTriage.Anomalies}).Warn(lrsTriage.AnomalyType)
+		} else {
+			log.Info("No leftover replica sets detected! namespace: ", ns)
 		}
 	}
 
@@ -267,6 +275,8 @@ func (o *DoctorOptions) Run() error {
 		}
 		if len(jobsTriage.Anomalies) > 0 {
 			log.WithFields(log.Fields{"resource": jobsTriage.ResourceType, "Anomalies": jobsTriage.Anomalies}).Warn(jobsTriage.AnomalyType)
+		} else {
+			log.Info("No leftover cronjobs detected!  namespace: ", ns)
 		}
 	}
 	// triage jobs end
