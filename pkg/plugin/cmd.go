@@ -1,11 +1,13 @@
 package plugin
 
 import (
+	"fmt"
 	"github.com/emirozer/kubectl-doctor/pkg/client"
 	"github.com/emirozer/kubectl-doctor/pkg/triage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -140,79 +142,70 @@ func (o *DoctorOptions) Validate() error {
 // Run doctor run
 func (o *DoctorOptions) Run() error {
 
+	// report setup
+	report := make(map[interface{}][]*triage.Triage)
+	report["TriageReport"] = make([]*triage.Triage, 0)
+
 	// triage cluster crucial components starts
-	log.Info("---")
 	log.Info("Starting triage of cluster crucial component health checks.")
 	componentsTriage, err := triage.TriageComponents(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	if len(componentsTriage.Anomalies) == 0 {
-		log.Info("Finished triage of cluster components, all clear!")
-	} else {
-		log.WithFields(log.Fields{"resource": componentsTriage.ResourceType, "Anomalies": componentsTriage.Anomalies}).Error(componentsTriage.AnomalyType)
+	if len(componentsTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], componentsTriage)
 	}
 	// triage cluster crucial components ends
 
 	// triage nodes stars
-	log.Info("---")
 	log.Info("Starting triage of nodes that form the cluster.")
 	nodesTriage, err := triage.TriageNodes(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	if len(nodesTriage.Anomalies) == 0 {
-		log.Info("Nodes are looking good, no issues!")
-	} else {
-		log.WithFields(log.Fields{"resource": nodesTriage.ResourceType, "Anomalies": nodesTriage.Anomalies}).Warn(nodesTriage.AnomalyType)
+	if len(nodesTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], nodesTriage)
 	}
 	// triage nodes ends
 
 	// triage endpoints starts
-	log.Info("---")
 	log.Info("Starting triage of cluster-wide Endpoints resources.")
 
 	endpointsTriage, err := triage.TriageEndpoints(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	if len(endpointsTriage.Anomalies) == 0 {
-		log.Info("Finished triage of Endpoints resources, all clear!")
-	} else {
-		log.WithFields(log.Fields{"resource": endpointsTriage.ResourceType, "Anomalies": endpointsTriage.Anomalies}).Warn(endpointsTriage.AnomalyType)
+	if len(endpointsTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], endpointsTriage)
+
 	}
 	// triage endpoints ends
 
 	// triage pvc starts
-	log.Info("---")
 	log.Info("Starting triage of cluster-wide pvc resources.")
 	pvcTriage, err := triage.TriagePVC(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	if len(pvcTriage.Anomalies) == 0 {
-		log.Info("Finished triage of pvc resources, all clear!")
-	} else {
-		log.WithFields(log.Fields{"resource": pvcTriage.ResourceType, "Anomalies": pvcTriage.Anomalies}).Warn(pvcTriage.AnomalyType)
+	if len(pvcTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], pvcTriage)
+
 	}
 	// triage pvc ends
 
 	// triage pv starts
-	log.Info("---")
 	log.Info("Starting triage of cluster-wide pv resources.")
 	pvTriage, err := triage.TriagePV(o.CoreClient)
 	if err != nil {
 		return err
 	}
-	if len(pvTriage.Anomalies) == 0 {
-		log.Info("Finished triage of pv resources, all clear!")
-	} else {
-		log.WithFields(log.Fields{"resource": pvTriage.ResourceType, "Anomalies": pvTriage.Anomalies}).Warn(pvTriage.AnomalyType)
+	if len(pvTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], pvTriage)
+
 	}
 	// triage pv ends
 
 	// triage deployments starts
-	log.Info("---")
 	log.Info("Starting triage of deployment resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
 		odeploymentTriage, err := triage.OrphanedDeployments(o.KubeCli, ns)
@@ -220,9 +213,7 @@ func (o *DoctorOptions) Run() error {
 			return err
 		}
 		if len(odeploymentTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": odeploymentTriage.ResourceType, "Anomalies": odeploymentTriage.Anomalies}).Warn(odeploymentTriage.AnomalyType)
-		} else {
-			log.Info("No orphaned deployments detected!  namespace: ", ns)
+			report["TriageReport"] = append(report["TriageReport"], odeploymentTriage)
 		}
 
 		ldeploymentTriage, err := triage.LeftOverDeployments(o.KubeCli, ns)
@@ -230,9 +221,7 @@ func (o *DoctorOptions) Run() error {
 			return err
 		}
 		if len(ldeploymentTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": ldeploymentTriage.ResourceType, "Anomalies": ldeploymentTriage.Anomalies}).Warn(ldeploymentTriage.AnomalyType)
-		} else {
-			log.Info("No leftover deployments detected!  namespace: ", ns)
+			report["TriageReport"] = append(report["TriageReport"], ldeploymentTriage)
 		}
 
 	}
@@ -240,7 +229,6 @@ func (o *DoctorOptions) Run() error {
 	// triage deployments ends
 
 	// triage replicasets starts
-	log.Info("---")
 	log.Info("Starting triage of replicasets resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
 		orsTriage, err := triage.OrphanedReplicaSet(o.KubeCli, ns)
@@ -248,39 +236,40 @@ func (o *DoctorOptions) Run() error {
 			return err
 		}
 		if len(orsTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": orsTriage.ResourceType, "Anomalies": orsTriage.Anomalies}).Warn(orsTriage.AnomalyType)
-		} else {
-			log.Info("No orphaned replica sets detected!  namespace: ", ns)
+			report["TriageReport"] = append(report["TriageReport"], orsTriage)
 		}
 		lrsTriage, err := triage.LeftOverReplicaSet(o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
 		if len(lrsTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": lrsTriage.ResourceType, "Anomalies": lrsTriage.Anomalies}).Warn(lrsTriage.AnomalyType)
-		} else {
-			log.Info("No leftover replica sets detected! namespace: ", ns)
+			report["TriageReport"] = append(report["TriageReport"], lrsTriage)
 		}
 	}
 
 	// triage replicasets ends
 
 	// triage jobs starts
-	log.Info("---")
 	log.Info("Starting triage of cronjob resources across cluster")
+	var jobsTriage *triage.Triage
 	for _, ns := range o.FetchedNamespaces {
-		jobsTriage, err := triage.LeftoverJobs(o.KubeCli, ns)
+		jobsTriage, err = triage.LeftoverJobs(o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
 		if len(jobsTriage.Anomalies) > 0 {
-			log.WithFields(log.Fields{"resource": jobsTriage.ResourceType, "Anomalies": jobsTriage.Anomalies}).Warn(jobsTriage.AnomalyType)
-		} else {
-			log.Info("No leftover cronjobs detected!  namespace: ", ns)
+			report["TriageReport"] = append(report["TriageReport"], jobsTriage)
 		}
 	}
 	// triage jobs end
 
+	// yaml outputter
+	log.Info("Triage report coming up in yaml format:")
+	d, err := yaml.Marshal(&report)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	fmt.Println("\n---\n", string(d))
 	return nil
 
 }
