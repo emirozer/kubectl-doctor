@@ -177,7 +177,6 @@ func (o *DoctorOptions) Run() error {
 	}
 	if len(endpointsTriage.Anomalies) > 0 {
 		report["TriageReport"] = append(report["TriageReport"], endpointsTriage)
-
 	}
 	// triage endpoints ends
 
@@ -189,7 +188,6 @@ func (o *DoctorOptions) Run() error {
 	}
 	if len(pvcTriage.Anomalies) > 0 {
 		report["TriageReport"] = append(report["TriageReport"], pvcTriage)
-
 	}
 	// triage pvc ends
 
@@ -201,7 +199,6 @@ func (o *DoctorOptions) Run() error {
 	}
 	if len(pvTriage.Anomalies) > 0 {
 		report["TriageReport"] = append(report["TriageReport"], pvTriage)
-
 	}
 	// triage pv ends
 
