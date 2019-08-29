@@ -261,12 +261,17 @@ func (o *DoctorOptions) Run() error {
 	// triage jobs end
 
 	// yaml outputter
-	log.Info("Triage report coming up in yaml format:")
-	d, err := yaml.Marshal(&report)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	if len(report["TriageReport"]) > 0 {
+		log.Info("Triage report coming up in yaml format:")
+		d, err := yaml.Marshal(&report)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		fmt.Println("\n---\n", string(d))
+	} else {
+		log.Info("Triage finished, cluster all clear, no anomalies detected!")
 	}
-	fmt.Println("\n---\n", string(d))
+
 	return nil
 
 }
