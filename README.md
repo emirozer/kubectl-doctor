@@ -7,8 +7,8 @@ This plugin does *not* change any state or configuration, it merely just scans a
 ![Demo](./docs/example.svg)
 
 ## Install
-1. Download a binary from [releases](https://github.com/emirozer/kubectl-doctor/releases) that is compatible with your os/arch
-2. Rename it to `kubectl-doctor`
+1. Download a zip that contains the binary from [releases](https://github.com/emirozer/kubectl-doctor/releases) that is compatible with your os/arch
+2. Unzip to get `kubectl-doctor`  (or `kubectl-doctor.exe` if windows)
 3. Add it to your `PATH`
 
 ## Usage
