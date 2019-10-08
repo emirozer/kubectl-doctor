@@ -260,6 +260,20 @@ func (o *DoctorOptions) Run() error {
 	}
 	// triage jobs end
 
+	// triage ingresses starts
+	log.Info("Starting triage of ingress resources across cluster")
+	var ingressTriage *triage.Triage
+	for _, ns := range o.FetchedNamespaces {
+		ingressTriage, err = triage.LeftoverIngresses(o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(ingressTriage.Anomalies) > 0 {
+			report["TriageReport"] = append(report["TriageReport"], ingressTriage)
+		}
+	}
+	// triage ingresses ends
+
 	// yaml outputter
 	if len(report["TriageReport"]) > 0 {
 		log.Info("Triage report coming up in yaml format:")
