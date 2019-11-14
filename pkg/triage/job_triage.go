@@ -18,7 +18,7 @@ func LeftoverJobs(kubeCli *kubernetes.Clientset, namespace string) (*Triage, err
 	currentTime := time.Now()
 	for _, i := range jobs.Items {
 		if i.Status.LastScheduleTime != nil {
-			if currentTime.Sub(i.Status.LastScheduleTime.Local()) > 31 {
+			if currentTime.Sub(i.Status.LastScheduleTime.Local()).Hours()/24 > 30 {
 				listOfTriages = append(listOfTriages, i.GetName())
 			}
 		}
