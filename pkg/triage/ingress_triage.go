@@ -1,8 +1,8 @@
 package triage
 
 import (
-	"fmt"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -13,13 +13,16 @@ func LeftoverIngresses(kubeCli *kubernetes.Clientset, namespace string) (*Triage
 
 	ingresses, err := kubeCli.NetworkingV1beta1().Ingresses(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
 
 	for _, i := range ingresses.Items {
-		fmt.Println("-------------")
-		fmt.Println(i.Status)
-		fmt.Println("-------------")
+		if i.Status.LoadBalancer.Size() <= 0 {
+			listOfTriages = append(listOfTriages, i.GetName())
+		}
+
 	}
 	return NewTriage("Ingress", "Found leftover ingresses in namespace: "+namespace, listOfTriages), nil
 }

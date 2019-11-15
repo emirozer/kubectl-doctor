@@ -12,8 +12,11 @@ func OrphanedReplicaSet(kubeCli *kubernetes.Clientset, namespace string) (*Triag
 	listOfTriages := make([]string, 0)
 	rs, err := kubeCli.AppsV1beta2().ReplicaSets(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	for _, i := range rs.Items {
 		if i.Status.Replicas > 0 && i.Status.AvailableReplicas == 0 {
 			listOfTriages = append(listOfTriages, i.GetName())
@@ -29,8 +32,11 @@ func LeftOverReplicaSet(kubeCli *kubernetes.Clientset, namespace string) (*Triag
 	listOfTriages := make([]string, 0)
 	rs, err := kubeCli.AppsV1beta2().ReplicaSets(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	for _, i := range rs.Items {
 		if i.Status.Replicas == 0 && i.Status.AvailableReplicas == 0 {
 			listOfTriages = append(listOfTriages, i.GetName())

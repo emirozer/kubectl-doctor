@@ -2,6 +2,9 @@ package plugin
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/coreos/go-semver/semver"
 	"github.com/emirozer/kubectl-doctor/pkg/client"
 	"github.com/emirozer/kubectl-doctor/pkg/triage"
 	"github.com/pkg/errors"
@@ -14,7 +17,6 @@ import (
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"os"
 )
 
 const (
@@ -32,6 +34,8 @@ const (
 
 	usageError = "expects no flags .. 'doctor' for doctor command"
 )
+
+const K8S_CLIENT_VERSION = "11.0.0"
 
 var (
 	clientset *kubernetes.Clientset
@@ -123,6 +127,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	log.Info("")
 	log.Info("Fetched namespaces: ", o.FetchedNamespaces)
 	log.Info("")
+
 	o.Config, err = configLoader.ClientConfig()
 	if err != nil {
 		return err
@@ -134,14 +139,28 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 // Validate validate before the run that the namespace list cannot be empty(somehow?)
 func (o *DoctorOptions) Validate() error {
 	if len(o.FetchedNamespaces) == 0 {
-		return errors.New("namespace must be specified properly!")
+		return errors.New("namespace must be specified/retrieved properly!")
+	}
+
+	// compat check
+	serverVersion, err := o.KubeCli.ServerVersion()
+	if err != nil {
+		return err
+	}
+	// vx.x.x to x.x.x
+	serverVersionStr := serverVersion.String()[1:]
+
+	serverSemVer := semver.New(serverVersionStr)
+	if serverSemVer.Major != 1 || serverSemVer.Minor != 14 {
+		log.Warn("doctor's client-go version: " + K8S_CLIENT_VERSION + " is not fully compatible with your k8s server version: " + serverVersionStr)
+		log.Warn("https://github.com/kubernetes/client-go#compatibility-matrix")
+		log.Warn("doctor run will be based on best-effort delivery")
 	}
 	return nil
 }
 
 // Run doctor run
 func (o *DoctorOptions) Run() error {
-
 	// report setup
 	report := make(map[interface{}][]*triage.Triage)
 	report["TriageReport"] = make([]*triage.Triage, 0)

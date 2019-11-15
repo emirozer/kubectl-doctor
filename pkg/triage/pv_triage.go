@@ -12,8 +12,11 @@ func TriagePV(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
 	pvs, err := coreClient.PersistentVolumes().List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	for _, i := range pvs.Items {
 		if i.Status.Phase == pvAvailable {
 			listOfTriages = append(listOfTriages, i.GetName())

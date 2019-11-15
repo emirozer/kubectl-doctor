@@ -12,8 +12,11 @@ func TriagePVC(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
 	pvcs, err := coreClient.PersistentVolumeClaims("").List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	for _, i := range pvcs.Items {
 		if i.Status.Phase == pvcLostPhase {
 			listOfTriages = append(listOfTriages, i.GetName())

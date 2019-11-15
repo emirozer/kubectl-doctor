@@ -1,0 +1,66 @@
+module github.com/emirozer/kubectl-doctor
+
+go 1.12
+
+require (
+	cloud.google.com/go v0.0.0-20160913182117-3b1ae45394a2
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+	github.com/Azure/go-autorest v11.1.0+incompatible
+	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
+	github.com/PuerkitoBio/purell v1.1.0
+	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+	github.com/coreos/go-semver v0.2.0
+	github.com/davecgh/go-spew v1.1.1
+	github.com/dgrijalva/jwt-go v0.0.0-20160705203006-01aeca54ebda
+	github.com/docker/docker v0.0.0-20180612054059-a9fbbdc8dd87
+	github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
+	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633
+	github.com/evanphx/json-patch v4.2.0+incompatible
+	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
+	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
+	github.com/go-openapi/jsonpointer v0.17.0
+	github.com/go-openapi/jsonreference v0.17.0
+	github.com/go-openapi/spec v0.17.2
+	github.com/go-openapi/swag v0.17.0
+	github.com/gogo/protobuf v0.0.0-20171007142547-342cbe0a0415
+	github.com/golang/protobuf v1.2.0
+	github.com/google/btree v0.0.0-20160524151835-7d79101e329e
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
+	github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d
+	github.com/gophercloud/gophercloud v0.0.0-20190126172459-c818fa66e4c8
+	github.com/gregjones/httpcache v0.0.0-20170728041850-787624de3eb7
+	github.com/imdario/mergo v0.3.5
+	github.com/inconshreveable/mousetrap v1.0.0
+	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
+	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+	github.com/modern-go/reflect2 v1.0.1
+	github.com/peterbourgon/diskv v2.0.1+incompatible
+	github.com/pkg/errors v0.0.0-20190227000051-27936f6d90f9
+	github.com/russross/blackfriday v1.5.2
+	github.com/shurcooL/sanitized_anchor_name v0.0.0-20151028001915-10ef21a441db
+	github.com/sirupsen/logrus v0.0.0-20190518135202-2a22dbedbad1
+	github.com/spf13/cobra v0.0.4
+	github.com/spf13/pflag v1.0.3
+	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
+	golang.org/x/oauth2 v0.0.0-20170412232759-a6bd8cefa181
+	golang.org/x/sys v0.0.0-20190422165155-953cdadca894
+	golang.org/x/text v0.3.0
+	golang.org/x/time v0.0.0-20161028155119-f51c12702a4d
+	google.golang.org/appengine v1.5.0
+	gopkg.in/inf.v0 v0.9.0
+	gopkg.in/yaml.v2 v2.2.2
+	k8s.io/api v0.0.0-20190313235455-40a48860b5ab
+	k8s.io/apimachinery v0.0.0-20190313205120-d7deff9243b1
+	k8s.io/cli-runtime v0.0.0-20190314001948-2899ed30580f
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/klog v0.0.0-20190306015804-8e90cee79f82
+	k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
+	k8s.io/kubernetes v1.14.0
+	k8s.io/utils v0.0.0-20190221042446-c2654d5206da
+	sigs.k8s.io/kustomize v2.0.3+incompatible
+	sigs.k8s.io/yaml v1.1.0
+)

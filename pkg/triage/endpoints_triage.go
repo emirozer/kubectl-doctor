@@ -9,8 +9,11 @@ import (
 func TriageEndpoints(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	endpoints, err := coreClient.Endpoints("").List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	listOfTriages := make([]string, 0)
 	for _, i := range endpoints.Items {
 		if len(i.Subsets) == 0 {

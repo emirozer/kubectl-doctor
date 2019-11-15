@@ -12,7 +12,9 @@ const componentHealthy = "True"
 func TriageComponents(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	components, err := coreClient.ComponentStatuses().List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
 
 	listOfTriages := make([]string, 0)
