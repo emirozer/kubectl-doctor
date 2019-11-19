@@ -13,8 +13,11 @@ func LeftoverJobs(kubeCli *kubernetes.Clientset, namespace string) (*Triage, err
 
 	jobs, err := kubeCli.BatchV1beta1().CronJobs(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	currentTime := time.Now()
 	for _, i := range jobs.Items {
 		if i.Status.LastScheduleTime != nil {

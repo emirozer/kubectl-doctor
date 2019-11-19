@@ -12,7 +12,9 @@ func OrphanedDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Tria
 	listOfTriages := make([]string, 0)
 	deployments, err := kubeCli.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
 	for _, i := range deployments.Items {
 		if i.Status.Replicas > 0 && i.Status.AvailableReplicas == 0 {
@@ -29,8 +31,11 @@ func LeftOverDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Tria
 	listOfTriages := make([]string, 0)
 	deployments, err := kubeCli.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
+
 	for _, i := range deployments.Items {
 		if i.Status.Replicas == 0 && i.Status.AvailableReplicas == 0 {
 			listOfTriages = append(listOfTriages, i.GetName())

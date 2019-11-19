@@ -13,7 +13,9 @@ func TriageNodes(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
 	nodes, err := coreClient.Nodes().List(v1.ListOptions{})
 	if err != nil {
-		return nil, err
+		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
+			return nil, err
+		}
 	}
 
 	for _, i := range nodes.Items {
