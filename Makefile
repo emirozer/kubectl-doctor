@@ -38,6 +38,14 @@ clean:
 fmt:
 	gofmt -w $(GOFMT_FILES)
 
+release:
+	mkdir dist
+	env GOOS=linux GOARCH=amd64 go build -o kubectl-doctor cmd/kubectl-doctor.go ; mv kubectl-doctor dist/kubectl-doctor_linux_amd64
+	env GOOS=linux GOARCH=arm go build -o kubectl-doctor cmd/kubectl-doctor.go ; mv kubectl-doctor dist/kubectl-doctor_linux_arm
+	env GOOS=darwin GOARCH=amd64 go build -o kubectl-doctor cmd/kubectl-doctor.go ; mv kubectl-doctor dist/kubectl-doctor_darwin_amd64
+	env GOOS=windows GOARCH=amd64 go build -o kubectl-doctor cmd/kubectl-doctor.go ; mv kubectl-doctor dist/kubectl-doctor_windows_amd64.exe
+	env GOOS=freebsd GOARCH=amd64 go build -o kubectl-doctor cmd/kubectl-doctor.go ; mv kubectl-doctor dist/kubectl-doctor_freebsd_amd64
+
 dist/$(NAME)-checksum-%:
 	cd dist && sha256sum $@.zip
 
