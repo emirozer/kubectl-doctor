@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -22,7 +24,6 @@ func init() {
 	log.SetLevel(log.InfoLevel)
 }
 
-
 // InitClient - Kubernetes Client
 func InitClient() *kubernetes.Clientset {
 	// determine which kubeconfig to use
@@ -30,10 +31,10 @@ func InitClient() *kubernetes.Clientset {
 	var kubeconfigbase string
 
 	kubeconfigFromEnv, err := tryGetKubeConfigFromEnvVar()
-	if err!= nil {
+	if err != nil {
 		log.Warn(err.Error())
 	} else {
-		return getClientSetFromConfig(kubeconfigFromEnv)
+		return kubeconfigFromEnv
 	}
 
 	// creating a client from env didn't work try auto discover
@@ -53,30 +54,62 @@ func InitClient() *kubernetes.Clientset {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	return getClientSetFromConfig(config)
-}
-
-func tryGetKubeConfigFromEnvVar() (*restclient.Config, error) {
-	env_config := os.Getenv("KUBECONFIG")
-
-	if env_config != "" {
-		config, err := clientcmd.BuildConfigFromFlags("", env_config)
-		if err != nil {
-			panic(err.Error())
-		}
-		return config, nil
-	} else {
-		return  nil, errors.New("KUBECONFIG env var not found falling back to auto discovery!")
-	}
-}
-
-func getClientSetFromConfig(config *restclient.Config) (*kubernetes.Clientset){
-	clientset, err := kubernetes.NewForConfig(config)
+	csBackup, err := getClientSetFromConfig(config)
 	if err != nil {
 		panic(err.Error())
 	}
-	return clientset
+	return csBackup
+}
+
+func tryGetKubeConfigFromEnvVar() (*kubernetes.Clientset, error) {
+	env_config := os.Getenv("KUBECONFIG")
+	var delimeter string
+
+	if env_config != "" {
+		if runtime.GOOS == "windows" {
+			delimeter = ";"
+		} else {
+			delimeter = ":"
+		}
+		if strings.Contains(env_config, delimeter) {
+			// kubeconfig env var is a list, handle that
+			log.WithFields(log.Fields{
+				"kubeconfiglist": clientcmd.NewDefaultClientConfigLoadingRules().Precedence,
+			}).Warn("discovered a list of kubeconfigs & will respect current-context!")
+			for _, i := range clientcmd.NewDefaultClientConfigLoadingRules().Precedence {
+				// if a problem occurs here it generally means that we are trying to build a client
+				// that does not respect the current-context so if that happens just pass that kubeconfig file
+				config, err := clientcmd.BuildConfigFromFlags("", i)
+				if err != nil {
+					continue
+				}
+				cs, err := getClientSetFromConfig(config)
+				if err != nil {
+					continue
+				}
+				return cs, nil
+			}
+
+		}
+
+		config, err := clientcmd.BuildConfigFromFlags("", env_config)
+		cs, err := getClientSetFromConfig(config)
+		if err != nil {
+			return nil, err
+		}
+		return cs, nil
+
+	} else {
+		return nil, errors.New("KUBECONFIG env var not found falling back to auto discovery!")
+	}
+}
+
+func getClientSetFromConfig(config *restclient.Config) (*kubernetes.Clientset, error) {
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return clientset, nil
 }
 
 func homeDir() string {
