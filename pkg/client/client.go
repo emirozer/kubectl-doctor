@@ -29,6 +29,7 @@ func InitClient() *kubernetes.Clientset {
 	// determine which kubeconfig to use
 	var kubeconfig *string
 	var kubeconfigbase string
+	var kubecontext *string
 
 	kubeconfigFromEnv, err := tryGetKubeConfigFromEnvVar()
 	if err != nil {
@@ -47,13 +48,20 @@ func InitClient() *kubernetes.Clientset {
 		kubeconfigbase,
 		"(optional) absolute path to the kubeconfig file",
 	)
+	kubecontext = flag.String(
+		"context",
+		"",
+		"(optional) name of kube context",
+	)
+
 	flag.Parse()
 
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		panic(err.Error())
-	}
+	config = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+                &clientcmd.ClientConfigLoadingRules{ExplicitPath: *kubeconfig},
+                &clientcmd.ConfigOverrides{
+                        CurrentContext: *context,
+                }).ClientConfig()
+	
 	csBackup, err := getClientSetFromConfig(config)
 	if err != nil {
 		panic(err.Error())
