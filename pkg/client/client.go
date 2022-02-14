@@ -56,11 +56,14 @@ func InitClient() *kubernetes.Clientset {
 
 	flag.Parse()
 
-	config = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
                 &clientcmd.ClientConfigLoadingRules{ExplicitPath: *kubeconfig},
                 &clientcmd.ConfigOverrides{
-                        CurrentContext: *context,
+                        CurrentContext: *kubecontext,
                 }).ClientConfig()
+	if err != nil {
+		panic(err.Error())
+	}
 	
 	csBackup, err := getClientSetFromConfig(config)
 	if err != nil {
