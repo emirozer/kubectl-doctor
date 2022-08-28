@@ -1,16 +1,18 @@
 package triage
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"context"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 const pvAvailable = "Available"
 
 // TriagePV gets a coreclient and checks if there are any pvs that are Available and Unclaimed
-func TriagePV(coreClient coreclient.CoreV1Interface) (*Triage, error) {
+func TriagePV(ctx context.Context, coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	pvs, err := coreClient.PersistentVolumes().List(v1.ListOptions{})
+	pvs, err := coreClient.PersistentVolumes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err

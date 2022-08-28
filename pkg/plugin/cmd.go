@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -11,25 +12,25 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
-	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 const (
 	example = `
 	# triage everything in the cluster
-	kubectl doctor 
+	kubectl doctor
 `
 	longDesc = `
     kubectl-doctor plugin will scan the given k8s cluster for any kind of anomalies and reports back to its user.
-    example anomalies: 
-        * deployments that are older than 30d with 0 available, 
+    example anomalies:
+        * deployments that are older than 30d with 0 available,
         * deployments that do not have minimum availability,
-        * kubernetes nodes cpu usage or memory usage too high. or too low to report scaledown possiblity 
+        * kubernetes nodes cpu usage or memory usage too high. or too low to report scaledown possiblity
 `
 
 	usageError = "expects no flags .. 'doctor' for doctor command"
@@ -62,12 +63,14 @@ type DoctorOptions struct {
 	KubeCli        *kubernetes.Clientset
 	Args           []string
 	Config         *restclient.Config
+	Context        context.Context
 }
 
 // NewDoctorOptions new doctor options initializer
 func NewDoctorOptions() *DoctorOptions {
 	return &DoctorOptions{
-		Flags: genericclioptions.NewConfigFlags(true),
+		Flags:   genericclioptions.NewConfigFlags(true),
+		Context: context.Background(),
 	}
 }
 
@@ -120,7 +123,7 @@ func (o *DoctorOptions) Complete(cmd *cobra.Command, args []string, argsLenAtDas
 	log.Info("Retrieving necessary clientset for targeted k8s cluster.")
 	o.CoreClient = clientset.CoreV1()
 
-	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(v1.ListOptions{})
+	fetchedNamespaces, _ := o.CoreClient.Namespaces().List(o.Context, v1.ListOptions{})
 	for _, i := range fetchedNamespaces.Items {
 		o.FetchedNamespaces = append(o.FetchedNamespaces, i.GetName())
 	}
@@ -167,7 +170,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage cluster crucial components starts
 	log.Info("Starting triage of cluster crucial component health checks.")
-	componentsTriage, err := triage.TriageComponents(o.CoreClient)
+	componentsTriage, err := triage.TriageComponents(o.Context, o.CoreClient)
 	if err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage nodes stars
 	log.Info("Starting triage of nodes that form the cluster.")
-	nodesTriage, err := triage.TriageNodes(o.CoreClient)
+	nodesTriage, err := triage.TriageNodes(o.Context, o.CoreClient)
 	if err != nil {
 		return err
 	}
@@ -187,21 +190,9 @@ func (o *DoctorOptions) Run() error {
 	}
 	// triage nodes ends
 
-	// triage endpoints starts
-	log.Info("Starting triage of cluster-wide Endpoints resources.")
-
-	endpointsTriage, err := triage.TriageEndpoints(o.CoreClient)
-	if err != nil {
-		return err
-	}
-	if len(endpointsTriage.Anomalies) > 0 {
-		report["TriageReport"] = append(report["TriageReport"], endpointsTriage)
-	}
-	// triage endpoints ends
-
 	// triage pvc starts
 	log.Info("Starting triage of cluster-wide pvc resources.")
-	pvcTriage, err := triage.TriagePVC(o.CoreClient)
+	pvcTriage, err := triage.TriagePVC(o.Context, o.CoreClient)
 	if err != nil {
 		return err
 	}
@@ -212,7 +203,7 @@ func (o *DoctorOptions) Run() error {
 
 	// triage pv starts
 	log.Info("Starting triage of cluster-wide pv resources.")
-	pvTriage, err := triage.TriagePV(o.CoreClient)
+	pvTriage, err := triage.TriagePV(o.Context, o.CoreClient)
 	if err != nil {
 		return err
 	}
@@ -224,7 +215,7 @@ func (o *DoctorOptions) Run() error {
 	// triage deployments starts
 	log.Info("Starting triage of deployment resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
-		odeploymentTriage, err := triage.OrphanedDeployments(o.KubeCli, ns)
+		odeploymentTriage, err := triage.OrphanedDeployments(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
@@ -232,7 +223,7 @@ func (o *DoctorOptions) Run() error {
 			report["TriageReport"] = append(report["TriageReport"], odeploymentTriage)
 		}
 
-		ldeploymentTriage, err := triage.LeftOverDeployments(o.KubeCli, ns)
+		ldeploymentTriage, err := triage.LeftOverDeployments(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
@@ -247,14 +238,14 @@ func (o *DoctorOptions) Run() error {
 	// triage replicasets starts
 	log.Info("Starting triage of replicasets resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
-		orsTriage, err := triage.OrphanedReplicaSet(o.KubeCli, ns)
+		orsTriage, err := triage.OrphanedReplicaSet(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
 		if len(orsTriage.Anomalies) > 0 {
 			report["TriageReport"] = append(report["TriageReport"], orsTriage)
 		}
-		lrsTriage, err := triage.LeftOverReplicaSet(o.KubeCli, ns)
+		lrsTriage, err := triage.LeftOverReplicaSet(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
@@ -265,11 +256,25 @@ func (o *DoctorOptions) Run() error {
 
 	// triage replicasets ends
 
+	// triage endpoints starts
+	log.Info("Starting triage of endpoints resources across cluster.")
+	for _, ns := range o.FetchedNamespaces {
+		endpointsTriage, err := triage.TriageEndpoints(o.Context, o.CoreClient, ns)
+		if err != nil {
+			return err
+		}
+		if len(endpointsTriage.Anomalies) > 0 {
+			report["TriageReport"] = append(report["TriageReport"], endpointsTriage)
+		}
+	}
+
+	// triage endpoints ends
+
 	// triage jobs starts
 	log.Info("Starting triage of cronjob resources across cluster")
 	var jobsTriage *triage.Triage
 	for _, ns := range o.FetchedNamespaces {
-		jobsTriage, err = triage.LeftoverJobs(o.KubeCli, ns)
+		jobsTriage, err = triage.LeftoverJobs(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}
@@ -283,7 +288,7 @@ func (o *DoctorOptions) Run() error {
 	log.Info("Starting triage of ingress resources across cluster")
 	var ingressTriage *triage.Triage
 	for _, ns := range o.FetchedNamespaces {
-		ingressTriage, err = triage.LeftoverIngresses(o.KubeCli, ns)
+		ingressTriage, err = triage.LeftoverIngresses(o.Context, o.KubeCli, ns)
 		if err != nil {
 			return err
 		}

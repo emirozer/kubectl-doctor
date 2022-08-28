@@ -1,16 +1,18 @@
 package triage
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"context"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // OrphanedReplicaSet gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are orphan replicasets
 // the criteria is that the desired number of replicas are bigger than 0 but the available replicas are 0
-func OrphanedReplicaSet(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
+func OrphanedReplicaSet(ctx context.Context, kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	rs, err := kubeCli.AppsV1beta2().ReplicaSets(namespace).List(v1.ListOptions{})
+	rs, err := kubeCli.AppsV1().ReplicaSets(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err
@@ -28,9 +30,9 @@ func OrphanedReplicaSet(kubeCli *kubernetes.Clientset, namespace string) (*Triag
 // LeftOverReplicaSet gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are left over replicasets
 // the criteria is that both the desired number of replicas and the available # of replicas are 0
-func LeftOverReplicaSet(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
+func LeftOverReplicaSet(ctx context.Context, kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	rs, err := kubeCli.AppsV1beta2().ReplicaSets(namespace).List(v1.ListOptions{})
+	rs, err := kubeCli.AppsV1().ReplicaSets(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err

@@ -1,17 +1,18 @@
 package triage
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"context"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // LeftoverIngresses gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are leftover ingresses
-func LeftoverIngresses(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
+func LeftoverIngresses(ctx context.Context, kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
 	listOfTriages := make([]string, 0)
 
-	ingresses, err := kubeCli.NetworkingV1beta1().Ingresses(namespace).List(v1.ListOptions{})
+	ingresses, err := kubeCli.NetworkingV1().Ingresses(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err
