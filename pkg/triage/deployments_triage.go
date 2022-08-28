@@ -1,19 +1,21 @@
 package triage
 
 import (
+	"context"
 	"strings"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // OrphanedDeployments gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are leftover deployments
 // the criteria is that the desired number of replicas are bigger than 0 but the available replicas are 0
-func OrphanedDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
+func OrphanedDeployments(ctx context.Context, kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	deployments, err := kubeCli.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
+	deployments, err := kubeCli.AppsV1().Deployments(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
-		if ! strings.Contains(err.Error(), KUBE_RESOURCE_NOT_FOUND) {
+		if !strings.Contains(err.Error(), KUBE_RESOURCE_NOT_FOUND) {
 			return nil, err
 		}
 	}
@@ -28,11 +30,11 @@ func OrphanedDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Tria
 // LeftOverDeployments gets a kubernetes.Clientset and a specific namespace string
 // then proceeds to search if there are leftover deployments
 // the criteria is that both the desired number of replicas and the available # of replicas are 0
-func LeftOverDeployments(kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
+func LeftOverDeployments(ctx context.Context, kubeCli *kubernetes.Clientset, namespace string) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	deployments, err := kubeCli.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
+	deployments, err := kubeCli.AppsV1().Deployments(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
-		if ! strings.Contains(err.Error(), KUBE_RESOURCE_NOT_FOUND) {
+		if !strings.Contains(err.Error(), KUBE_RESOURCE_NOT_FOUND) {
 			return nil, err
 		}
 	}

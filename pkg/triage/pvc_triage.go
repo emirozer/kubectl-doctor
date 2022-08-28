@@ -1,16 +1,18 @@
 package triage
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"context"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 const pvcLostPhase = "Lost"
 
 // TriagePVC gets a coreclient and checks if there are any pvcs that are in lost state
-func TriagePVC(coreClient coreclient.CoreV1Interface) (*Triage, error) {
+func TriagePVC(ctx context.Context, coreClient coreclient.CoreV1Interface) (*Triage, error) {
 	listOfTriages := make([]string, 0)
-	pvcs, err := coreClient.PersistentVolumeClaims("").List(v1.ListOptions{})
+	pvcs, err := coreClient.PersistentVolumeClaims("").List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err

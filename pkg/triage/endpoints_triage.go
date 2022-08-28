@@ -1,13 +1,15 @@
 package triage
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"context"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // TriageEndpoints gets a coreclient for k8s and scans through all endpoints to see if they are leftover/unused
-func TriageEndpoints(coreClient coreclient.CoreV1Interface) (*Triage, error) {
-	endpoints, err := coreClient.Endpoints("").List(v1.ListOptions{})
+func TriageEndpoints(ctx context.Context, coreClient coreclient.CoreV1Interface, namespace string) (*Triage, error) {
+	endpoints, err := coreClient.Endpoints(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
 		if err.Error() != KUBE_RESOURCE_NOT_FOUND {
 			return nil, err
@@ -20,5 +22,5 @@ func TriageEndpoints(coreClient coreclient.CoreV1Interface) (*Triage, error) {
 			listOfTriages = append(listOfTriages, i.GetName())
 		}
 	}
-	return NewTriage("Endpoints", "Found orphaned endpoints!", listOfTriages), nil
+	return NewTriage("Endpoints", "Found orphaned endpoints in namespace: "+namespace, listOfTriages), nil
 }
