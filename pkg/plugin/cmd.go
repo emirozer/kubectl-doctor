@@ -212,6 +212,17 @@ func (o *DoctorOptions) Run() error {
 	}
 	// triage pv ends
 
+	// triage ns starts
+	log.Info("Starting triage of namespace resources.")
+	nsTriage, err := triage.TerminatingNamespaces(o.Context, o.KubeCli)
+	if err != nil {
+		return err
+	}
+	if len(nsTriage.Anomalies) > 0 {
+		report["TriageReport"] = append(report["TriageReport"], pvTriage)
+	}
+	// triage ns ends
+
 	// triage deployments starts
 	log.Info("Starting triage of deployment resources across cluster")
 	for _, ns := range o.FetchedNamespaces {
@@ -256,6 +267,27 @@ func (o *DoctorOptions) Run() error {
 
 	// triage replicasets ends
 
+	// triage pods starts
+	log.Info("Starting triage of pod resources across cluster")
+	for _, ns := range o.FetchedNamespaces {
+		standalonePodTriage, err := triage.StandalonePods(o.Context, o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(standalonePodTriage.Anomalies) > 0 {
+			report["TriageReport"] = append(report["TriageReport"], standalonePodTriage)
+		}
+		unreadyPodTriage, err := triage.UnreadyPods(o.Context, o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(unreadyPodTriage.Anomalies) > 0 {
+			report["TriageReport"] = append(report["TriageReport"], unreadyPodTriage)
+		}
+	}
+
+	// triage pods ends
+
 	// triage endpoints starts
 	log.Info("Starting triage of endpoints resources across cluster.")
 	for _, ns := range o.FetchedNamespaces {
@@ -297,6 +329,20 @@ func (o *DoctorOptions) Run() error {
 		}
 	}
 	// triage ingresses ends
+
+	// triage PodDisruptionBudgets starts
+	log.Info("Starting triage of PodDisruptionBudget resources across cluster")
+	var pdbTriage *triage.Triage
+	for _, ns := range o.FetchedNamespaces {
+		pdbTriage, err = triage.OrphanedDisruptionBudget(o.Context, o.KubeCli, ns)
+		if err != nil {
+			return err
+		}
+		if len(pdbTriage.Anomalies) > 0 {
+			report["TriageReport"] = append(report["TriageReport"], pdbTriage)
+		}
+	}
+	// triage PodDisruptionBudgets ends
 
 	// yaml outputter
 	if len(report["TriageReport"]) > 0 {
