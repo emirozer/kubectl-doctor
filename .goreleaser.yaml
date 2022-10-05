@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+archives:
+  - files:
+      - LICENSE
+    format: zip
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+      - arm64
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - -s -w
+    main: ./cmd
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+changelog:
+  groups:
+    - title: Features
+      regexp: "^.*feat(?:(\\w))*:+.*$"
+      order: 0
+    - title: Bug fixes
+      regexp: "^.*fix(?:(\\w))*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+  use: github
+
+checksum:
+  name_template: "checksums.txt"
+
+krews:
+  - name: doctor
+    caveats: |
+      This plugin needs higher privileges on core API group.
+      Potentially a ClusterRole that can get cluster-scoped resources.
+      Such as nodes / all namespaces etc.
+    description: |
+      This plugin is inspired by brew doctor.
+      It will scan the active kube-context for anomalies or
+      useful action points that it can report back to you.
+      This plugin does not change any state or configuration.
+
+      Please check the repository for an example report:
+
+      * https://github.com/emirozer/kubectl-doctor
+    homepage: https://github.com/emirozer/kubectl-doctor
+    short_description: Scans your cluster and reports anomalies
+    skip_upload: "true"
+
+release:
+  disable: false
+  prerelease: auto
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
