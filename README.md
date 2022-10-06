@@ -11,6 +11,11 @@ This plugin does *not* change any state or configuration, it merely just scans a
 2. Unzip to get `kubectl-doctor`  (or `kubectl-doctor.exe` if windows)
 3. Add it to your `PATH`
 
+### Using [Krew](https://krew.sigs.k8s.io/)
+```sh
+$ kubectl krew install doctor
+```
+
 ## Usage
 When the plugin binary is found from `PATH` you can just execute it through `kubectl` CLI
 ```shell
